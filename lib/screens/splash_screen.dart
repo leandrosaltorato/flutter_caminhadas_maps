@@ -22,6 +22,7 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 3000),
     );
+
     _opacidade = TweenSequence<double>([
       TweenSequenceItem(
           tween: Tween(begin: 0.0, end: 1.0)

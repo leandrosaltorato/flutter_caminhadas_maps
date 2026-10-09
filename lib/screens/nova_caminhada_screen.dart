@@ -31,43 +31,74 @@ class _NovaCaminhadaScreenState extends State<NovaCaminhadaScreen> {
   }
 
   Future<void> _obterLocalizacao() async {
-    LatLng posicao = _padrao;
+    if (mounted) setState(() => _carregandoGps = true);
+    LatLng? posicao;
     String? aviso;
+    SnackBarAction? acao;
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        aviso = 'GPS desativado. Usando localização padrão.';
+        aviso = 'GPS desativado. Ative a localização do celular.';
+        acao = SnackBarAction(
+          label: 'ATIVAR',
+          onPressed: Geolocator.openLocationSettings,
+        );
       } else {
         var perm = await Geolocator.checkPermission();
         if (perm == LocationPermission.denied) {
           perm = await Geolocator.requestPermission();
         }
-        if (perm == LocationPermission.denied ||
-            perm == LocationPermission.deniedForever) {
-          aviso = 'Permissão de localização negada. Usando localização padrão.';
+        if (perm == LocationPermission.deniedForever) {
+          aviso = 'Permissão de localização bloqueada. Libere nas configurações do app.';
+          acao = SnackBarAction(
+            label: 'ABRIR',
+            onPressed: Geolocator.openAppSettings,
+          );
+        } else if (perm == LocationPermission.denied) {
+          aviso = 'Permissão de localização negada.';
         } else {
-          final p = await Geolocator.getCurrentPosition(
-            locationSettings:
-                const LocationSettings(accuracy: LocationAccuracy.high),
-          ).timeout(const Duration(seconds: 15));
-          posicao = LatLng(p.latitude, p.longitude);
+          try {
+            final p = await Geolocator.getCurrentPosition(
+              locationSettings:
+                  const LocationSettings(accuracy: LocationAccuracy.high),
+            ).timeout(const Duration(seconds: 20));
+            posicao = LatLng(p.latitude, p.longitude);
+          } catch (_) {
+            // Fallback: última posição conhecida ou precisão menor
+            Position? p;
+            try {
+              p = await Geolocator.getLastKnownPosition();
+            } catch (_) {}
+            p ??= await Geolocator.getCurrentPosition(
+              locationSettings:
+                  const LocationSettings(accuracy: LocationAccuracy.low),
+            ).timeout(const Duration(seconds: 15));
+            posicao = LatLng(p.latitude, p.longitude);
+          }
         }
       }
-    } catch (_) {
-      aviso = 'Não foi possível obter o GPS. Usando localização padrão.';
+    } catch (e) {
+      aviso = 'Não foi possível obter o GPS ($e).';
     }
     if (!mounted) return;
     setState(() {
-      _origem = posicao;
+      _origem = posicao ?? _origem ?? _padrao;
       _carregandoGps = false;
     });
-    _mapController.move(posicao, 16);
-    if (aviso != null) _mensagem(aviso);
+    _mapController.move(_origem!, 16);
+    if (posicao == null) {
+      _mensagem('${aviso ?? 'Sem localização.'} Usando local padrão.',
+          acao: acao);
+    }
   }
 
-  void _mensagem(String texto) {
+  void _mensagem(String texto, {SnackBarAction? acao}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(texto)));
+      ..showSnackBar(SnackBar(
+        content: Text(texto),
+        action: acao,
+        duration: const Duration(seconds: 8),
+      ));
   }
 
   Future<void> _selecionarDestino(LatLng ponto) async {
@@ -113,6 +144,7 @@ class _NovaCaminhadaScreenState extends State<NovaCaminhadaScreen> {
     );
   }
 
+  /// RF003.2 - Modal pedindo o título da caminhada.
   Future<void> _abrirModalSalvar() async {
     final previa = _montarCaminhada('');
     final controller = TextEditingController();
@@ -165,7 +197,7 @@ class _NovaCaminhadaScreenState extends State<NovaCaminhadaScreen> {
 
     await StorageService.salvar(_montarCaminhada(titulo));
     if (!mounted) return;
-    Navigator.pop(context); 
+    Navigator.pop(context); // volta para a Home
   }
 
   @override
@@ -244,6 +276,16 @@ class _NovaCaminhadaScreenState extends State<NovaCaminhadaScreen> {
                       TextSourceAttribution('© OpenStreetMap contributors'),
                     ]),
                   ],
+                ),
+                Positioned(
+                  bottom: 24,
+                  right: 12,
+                  child: FloatingActionButton.small(
+                    heroTag: 'minha_localizacao',
+                    tooltip: 'Minha localização',
+                    onPressed: _obterLocalizacao,
+                    child: const Icon(Icons.my_location),
+                  ),
                 ),
                 if (_carregandoGps || _buscandoRota)
                   const Positioned(

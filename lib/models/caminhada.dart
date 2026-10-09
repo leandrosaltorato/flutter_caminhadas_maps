@@ -29,10 +29,11 @@ class Caminhada {
   Uint8List? get fotoBytes =>
       fotoBase64 == null ? null : base64Decode(fotoBase64!);
 
+  /// Texto de resumo, igual ao dos wireframes.
   String resumo({bool passado = true}) {
     final verbo = passado ? 'Caminhou' : 'Vai percorrer';
-    return '$verbo uma distancia de ${formatarDistancia(distanciaMetros)} '
-        'queimando ${calorias.round()} calorias '
+    return '$verbo uma distância de ${formatarDistancia(distanciaMetros)} '
+        'queimando cerca de ${calorias.round()} calorias '
         'em aproximadamente ${formatarTempo(tempoMinutos)}';
   }
 
