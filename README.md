@@ -46,8 +46,6 @@ Depois do `flutter create .`, edite `android/app/src/main/AndroidManifest.xml` e
 <uses-permission android:name="android.permission.CAMERA"/>
 ```
 
-> No emulador, defina uma localização em *Extended controls → Location*. Se o GPS não estiver disponível, o app usa a Av. Paulista (SP) como ponto de partida.
-
 ### Ícone do aplicativo
 
 O ícone está em `assets/icon.png`. Para aplicá-lo:
