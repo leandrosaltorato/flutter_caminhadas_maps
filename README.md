@@ -2,8 +2,6 @@
 
 Aplicativo Flutter para registrar e acompanhar caminhadas, usando **geolocalização (GPS)**, **mapas (flutter_map + OpenStreetMap)**, **rotas (OSRM)**, **câmera** e **armazenamento local**.
 
-> Adicione aqui os prints do aplicativo (Splash, Home, Nova caminhada, Modal Salvar, Detalhes) em `assets/prints/`.
-
 ## Requisitos atendidos
 
 | Requisito | Onde |
